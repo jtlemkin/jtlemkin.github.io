@@ -2,230 +2,151 @@
 <html>
 <head>
     <title>Solar Savings Calculator</title>
-    <style>
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        input[type="submit"] {
-            width: fit-content;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <form id="solarForm">
+<body class="p-4">
+    <form id="solarForm" class="flex flex-col gap-1">
         <label>
-            Current monthly electric bill:
-            <input type="number" id="currentBill" required value="200">
+            Utility Monthly Bill:
+            <input type="number" id="currentBill" required value="200" class="input-field bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </label>
         <label>
-            Annual increase rate (%):
-            <input type="number" id="currentIncreaseRate" required step="0.1" value="5">
+            Utility Annual Rate Increase (%):
+            <input type="number" id="currentIncreaseRate" required step="0.01" value="5" class="input-field bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </label>
         <label>
-            Monthly bill with solar lease:
-            <input type="number" id="leaseBill" required value="180">
+            Solar PPA Monthly Bill:
+            <input type="number" id="solarBill" required value="180" class="input-field bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </label>
         <label>
-            Annual increase rate with lease (%):
-            <input type="number" id="leaseIncreaseRate" required step="0.1" value="1.8">
+            Solar PPA Annual Rate Increase (%):
+            <input type="number" id="solarIncreaseRate" required step="0.01" value="1.8" class="input-field bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </label>
-        <input type="submit" value="Calculate">
+        <input type="submit" value="Calculate" class="w-24">
     </form>
-    <canvas id="monthlyCostChart"></canvas>
-    <canvas id="totalSavingsChart"></canvas>
+    <div style="height: 400px;">
+        <canvas id="monthlyCostChart""></canvas>
+    </div>
     <script>
-        let USDollar = new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        });
-
-        var years = [];
-        for (var i = 1; i <= 25; i++) {
-            years.push(i);
-        }
-
-        function createMonthlyCostChart(currentBills, leaseBills) {
-            var ctx = document.getElementById('monthlyCostChart').getContext('2d');
-            var chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [
-                        {
-                            label: 'Bill Without Solar',
-                            data: currentBills,
-                            borderColor: 'blue',
-                            fill: false
-                        },
-                        {
-                            label: 'Bill With Solar Lease',
-                            data: leaseBills,
-                            borderColor: 'green',
-                            fill: false
-                        },
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    title: {
-                        display: true,
-                        text: 'Monthly Bill Comparison'
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Years'
-                            }
-                        },
-                        y: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Monthly Bill'
-                            }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        tooltip: {
-                            titleFont: {
-                                size: 24,
-                            },
-                            bodyFont: {
-                                size: 20
-                            },
-                            footerFont: {
-                                size: 24,
-                            },
-                            callbacks: {
-                                title: function(tooltipItems) {
-                                    return `Year ${tooltipItems[0].label}`;
-                                },
-                                label: function(context) {
-                                    var label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    label += USDollar.format(context.parsed.y);
-                                    return label;
-                                },
-                                footer: function(tooltipItems) {
-                                    return `Monthly Savings with Solar: ${USDollar.format(tooltipItems[0].parsed.y - tooltipItems[1].parsed.y)}`
-                                }
-                            },
-                        }
-                    }
-                }
-            });
-        }
-
-        function createCumulativeSavingsChart(currentBills, leaseBills) {
-            let cumulativeLeaseSavings = [];
-
-            for (let i = 0; i < years.length; i++) {
-                const lastLeaseSavings = cumulativeLeaseSavings.at(-1) || 0;
-                cumulativeLeaseSavings.push(lastLeaseSavings + (currentBills[i] - leaseBills[i]) * 12);
-            }
-
-            var ctx = document.getElementById('totalSavingsChart').getContext('2d');
-            var chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: years,
-                    datasets: [
-                        {
-                            label: 'Savings with Solar',
-                            data: cumulativeLeaseSavings,
-                            borderColor: 'green',
-                            fill: false
-                        },
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    title: {
-                        display: true,
-                        text: 'Cumulative Savings Comparison'
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Years'
-                            }
-                        },
-                        y: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Cumulative Savings'
-                            }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    plugins: {
-                        tooltip: {
-                            titleFont: {
-                                size: 24,
-                            },
-                            bodyFont: {
-                                size: 20
-                            },
-                            footerFont: {
-                                size: 24,
-                            },
-                            callbacks: {
-                                title: function(tooltipItems) {
-                                    return `Year ${tooltipItems[0].label}`;
-                                },
-                                label: function(context) {
-                                    var label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    label += USDollar.format(context.parsed.y);
-                                    return label;
-                                }
-                            },
-                        }
-                    }
-                }
-            });
-        }
+        let chart = null;
 
         document.getElementById('solarForm').addEventListener('submit', function(event) {
             event.preventDefault();
             
             var currentBill = parseFloat(document.getElementById('currentBill').value);
             var currentIncreaseRate = parseFloat(document.getElementById('currentIncreaseRate').value) / 100;
-            var leaseBill = parseFloat(document.getElementById('leaseBill').value);
-            var leaseIncreaseRate = parseFloat(document.getElementById('leaseIncreaseRate').value) / 100;
+            var solarBill = parseFloat(document.getElementById('solarBill').value);
+            var solarIncreaseRate = parseFloat(document.getElementById('solarIncreaseRate').value) / 100;
 
+            const years = [];
             var currentBills = [];
-            var leaseBills = [];
+            var solarBills = [];
+            const cumulativeSavings = [];
             
-            for (var i = 0; i < years.length; i++) {
+            for (var i = 0; i < 25; i++) {
+                years.push(i + 1)
                 currentBills.push(currentBill);
-                leaseBills.push(leaseBill);
+                solarBills.push(solarBill);
+
+                const lastYearsSavings = cumulativeSavings.length > 0 ? cumulativeSavings[cumulativeSavings.length - 1] : 0;
+                cumulativeSavings.push(lastYearsSavings + (currentBill - solarBill) * 12);
                 
                 currentBill += currentBill * currentIncreaseRate;
-                leaseBill += leaseBill * leaseIncreaseRate;
+                solarBill += solarBill * solarIncreaseRate;
             }
             
-            createMonthlyCostChart(currentBills, leaseBills);
-            createCumulativeSavingsChart(currentBills, leaseBills);
+            let USDollar = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+            });
+
+            var ctx = document.getElementById('monthlyCostChart').getContext('2d');
+
+            if (chart) {
+                chart.data.datasets[0].data = currentBills;
+                chart.data.datasets[1].data = solarBills;
+                chart.update();
+            } else {
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: years,
+                        datasets: [
+                            {
+                                label: 'Bill Without Solar',
+                                data: currentBills,
+                                borderColor: 'blue',
+                                fill: false
+                            },
+                            {
+                                label: 'Bill With Solar PPA',
+                                data: solarBills,
+                                borderColor: 'green',
+                                fill: false
+                            },
+                        ]
+                    },
+                    options: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Bill Comparison'
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Years'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Monthly Bill'
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            tooltip: {
+                                titleFont: {
+                                    size: 20,
+                                },
+                                bodyFont: {
+                                    size: 18
+                                },
+                                footerFont: {
+                                    size: 20,
+                                },
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        return `Year ${tooltipItems[0].label}`;
+                                    },
+                                    label: function(context) {
+                                        var label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += USDollar.format(context.parsed.y);
+                                        return label;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        return [
+                                            `Monthly Savings with Solar: ${USDollar.format(tooltipItems[0].parsed.y - tooltipItems[1].parsed.y)}`,
+                                            `Total Savings: ${USDollar.format(cumulativeSavings[tooltipItems[0].dataIndex])}`
+                                        ];
+                                    }
+                                },
+                            }
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>
