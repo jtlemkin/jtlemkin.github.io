@@ -2,11 +2,17 @@
 <html>
 <head>
     <title>Solar Savings Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="p-4">
-    <form id="solarForm" class="flex flex-col gap-1">
+<style>
+    canvas {
+        touch-action: none;
+    }
+</style>
+<body class="p-4 flex flex-col gap-4">
+    <form id="solarForm" class="flex flex-col gap-1 text-lg">
         <label>
             Utility Monthly Bill:
             <input type="number" id="currentBill" required value="200" class="input-field bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
@@ -23,13 +29,19 @@
             Solar PPA Annual Rate Increase (%):
             <input type="number" id="solarIncreaseRate" required step="0.01" value="1.8" class="input-field bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         </label>
-        <input type="submit" value="Calculate" class="w-24">
+        <input type="submit" value="Calculate" class="w-32 max-w-full mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
     </form>
     <div style="height: 400px;">
-        <canvas id="monthlyCostChart""></canvas>
+        <canvas id="monthlyCostChart"></canvas>
     </div>
     <script>
         let chart = null;
+
+        document.addEventListener('touchend', function (event) {
+            if (chart && event.target && event.target.tagName.toLowerCase() !== "canvas") {
+                chart.canvas.dispatchEvent(new Event('mouseout'));
+            }
+        });
 
         document.getElementById('solarForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -105,6 +117,11 @@
                                 title: {
                                     display: true,
                                     text: 'Monthly Bill'
+                                },
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        return '$' + value.toFixed(0);
+                                    }
                                 }
                             }
                         },
@@ -112,6 +129,7 @@
                             intersect: false,
                             mode: 'index'
                         },
+                        maintainAspectRatio: false,
                         plugins: {
                             tooltip: {
                                 titleFont: {
