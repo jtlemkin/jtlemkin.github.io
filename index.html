@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solar Savings Calculator</title>
+    <style>
+        /* Add your CSS here */
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <form id="solarForm">
+        <label>
+            Current monthly electric bill:
+            <input type="number" id="currentBill" required value="200">
+        </label>
+        <label>
+            Annual increase rate (%):
+            <input type="number" id="currentIncreaseRate" required step="0.1" value="5">
+        </label>
+        <label>
+            Monthly bill with solar lease:
+            <input type="number" id="leaseBill" required value="180">
+        </label>
+        <label>
+            Annual increase rate with lease (%):
+            <input type="number" id="leaseIncreaseRate" required step="0.1" value="1.8">
+        </label>
+        <label>
+            Monthly bill with solar purchase:
+            <input type="number" id="purchaseBill" required value="200">
+        </label>
+        <input type="submit" value="Calculate">
+    </form>
+    <canvas id="monthlyCostChart"></canvas>
+    <canvas id="totalSavingsChart"></canvas>
+    <script>
+        let USDollar = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        });
+
+        var years = [];
+        for (var i = 1; i <= 25; i++) {
+            years.push(i);
+        }
+
+        function createMonthlyCostChart(currentBills, leaseBills, purchaseBills) {
+            var ctx = document.getElementById('monthlyCostChart').getContext('2d');
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Bill Without Solar',
+                            data: currentBills,
+                            borderColor: 'blue',
+                            fill: false
+                        },
+                        {
+                            label: 'Bill With Solar Lease',
+                            data: leaseBills,
+                            borderColor: 'green',
+                            fill: false
+                        },
+                        {
+                            label: 'Bill With Solar Purchase',
+                            data: purchaseBills,
+                            borderColor: 'red',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: 'Monthly Bill Comparison'
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Years'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Monthly Bill'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        tooltip: {
+                            titleFont: {
+                                size: 24,
+                            },
+                            bodyFont: {
+                                size: 20
+                            },
+                            footerFont: {
+                                size: 24,
+                            },
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return `Year ${tooltipItems[0].label}`;
+                                },
+                                label: function(context) {
+                                    var label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += USDollar.format(context.parsed.y);
+                                    return label;
+                                },
+                                footer: function(tooltipItems) {
+                                    return [
+                                        `Monthly Savings with Solar Lease: ${USDollar.format(tooltipItems[0].parsed.y - tooltipItems[1].parsed.y)}`,
+                                        `Monthly Savings with Solar Purchase: ${USDollar.format(tooltipItems[0].parsed.y - tooltipItems[2].parsed.y)}`
+                                    ]
+                                }
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCumulativeSavingsChart(currentBills, leaseBills, purchaseBills) {
+            let cumulativeLeaseSavings = [];
+            let cumulativePurchaseSavings = [];
+
+            for (let i = 0; i < years.length; i++) {
+                const lastLeaseSavings = cumulativeLeaseSavings.at(-1) || 0;
+                const lastPurchaseSavings = cumulativePurchaseSavings.at(-1) || 0;
+                cumulativeLeaseSavings.push(lastLeaseSavings + (currentBills[i] - leaseBills[i]) * 12);
+                cumulativePurchaseSavings.push(lastPurchaseSavings + (currentBills[i] - purchaseBills[i]) * 12);
+            }
+
+            var ctx = document.getElementById('totalSavingsChart').getContext('2d');
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Savings with Solar Lease',
+                            data: cumulativeLeaseSavings,
+                            borderColor: 'green',
+                            fill: false
+                        },
+                        {
+                            label: 'Savings with Solar Purchase',
+                            data: cumulativePurchaseSavings,
+                            borderColor: 'red',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: true,
+                        text: 'Cumulative Savings Comparison'
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Years'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Cumulative Savings'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        tooltip: {
+                            titleFont: {
+                                size: 24,
+                            },
+                            bodyFont: {
+                                size: 20
+                            },
+                            footerFont: {
+                                size: 24,
+                            },
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return `Year ${tooltipItems[0].label}`;
+                                },
+                                label: function(context) {
+                                    var label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += USDollar.format(context.parsed.y);
+                                    return label;
+                                }
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('solarForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            var currentBill = parseFloat(document.getElementById('currentBill').value);
+            var currentIncreaseRate = parseFloat(document.getElementById('currentIncreaseRate').value) / 100;
+            var leaseBill = parseFloat(document.getElementById('leaseBill').value);
+            var leaseIncreaseRate = parseFloat(document.getElementById('leaseIncreaseRate').value) / 100;
+            var purchaseBill = parseFloat(document.getElementById('purchaseBill').value);
+
+            var currentBills = [];
+            var leaseBills = [];
+            var purchaseBills = [];
+            
+            for (var i = 0; i < years.length; i++) {
+                currentBills.push(currentBill);
+                leaseBills.push(leaseBill);
+                purchaseBills.push(purchaseBill);
+                
+                currentBill += currentBill * currentIncreaseRate;
+                leaseBill += leaseBill * leaseIncreaseRate;
+            }
+            
+            createMonthlyCostChart(currentBills, leaseBills, purchaseBills);
+            createCumulativeSavingsChart(currentBills, leaseBills, purchaseBills);
+        });
+    </script>
+</body>
+</html>
