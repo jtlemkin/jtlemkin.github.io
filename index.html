@@ -54,15 +54,11 @@
             const years = [];
             var currentBills = [];
             var solarBills = [];
-            const cumulativeSavings = [];
-            
+
             for (var i = 0; i < 25; i++) {
                 years.push(i + 1)
                 currentBills.push(currentBill);
                 solarBills.push(solarBill);
-
-                const lastYearsSavings = cumulativeSavings.length > 0 ? cumulativeSavings[cumulativeSavings.length - 1] : 0;
-                cumulativeSavings.push(lastYearsSavings + (currentBill - solarBill) * 12);
                 
                 currentBill += currentBill * currentIncreaseRate;
                 solarBill += solarBill * solarIncreaseRate;
@@ -96,7 +92,7 @@
                                 data: solarBills,
                                 borderColor: 'green',
                                 fill: false
-                            },
+                            }
                         ]
                     },
                     options: {
@@ -155,6 +151,18 @@
                                         return label;
                                     },
                                     footer: function(tooltipItems) {
+                                        const { dataIndex } = tooltipItems[0];
+                                        const cumulativeSavings = [];
+            
+                                        for (var i = 0; i <= dataIndex; i++) {
+                                            const lastYearsSavings = cumulativeSavings.length > 0 ? cumulativeSavings[cumulativeSavings.length - 1] : 0;
+
+                                            const noSolarBill = chart.data.datasets[0].data[i];
+                                            const solarBill = chart.data.datasets[1].data[i];
+                                            
+                                            cumulativeSavings.push(lastYearsSavings + (noSolarBill - solarBill) * 12);
+                                        }
+
                                         return [
                                             `Monthly Savings with Solar: ${USDollar.format(tooltipItems[0].parsed.y - tooltipItems[1].parsed.y)}`,
                                             `Total Savings: ${USDollar.format(cumulativeSavings[tooltipItems[0].dataIndex])}`
